@@ -26,7 +26,7 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
@@ -34,6 +34,12 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
+      
+      - uses: docker/login-action@v2
+          with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Runs a single command using the runners shell
       #- name: Run a one-line script
@@ -59,9 +65,5 @@ jobs:
      #   VERSION=latest
      #   docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
      #   docker push $IMAGE_ID:$VERSION
-      name: Login to GitHub Container Registry
-      uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+
+
