@@ -44,8 +44,23 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v2
-  
 
+      
+      - name: Build image and push to Docker Hub and GitHub Container Registry
+        uses: docker/build-push-action@v2
+        with:
+          # relative path to the place where source code with Dockerfile is located
+          #context: ./src/samples/simple
+          # Note: tags has to be all lower-case
+          tags: |
+            kirilc/node-web-app:latest 
+            ghcr.io/kirilc/node-web-app:latest
+          # build on feature branches, push only on main branch
+          push: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
+        
       # Runs a single command using the runners shell
       #- name: Run a one-line script
        # run: echo Hello, world!
