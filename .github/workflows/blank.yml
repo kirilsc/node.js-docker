@@ -3,6 +3,8 @@
 name: CI
 
 env:
+  REGISTRY: ghcr.io
+#  IMAGE_NAME: ${{ github.repository }}
   IMAGE_NAME: node-web-app
 
 
@@ -41,26 +43,48 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       # setup Docker buld action
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v2
+#      - name: Set up Docker Buildx
+#        id: buildx
+#        uses: docker/setup-buildx-action@v2
 
-      
-      - name: Build image and push to Docker Hub and GitHub Container Registry
-        uses: docker/build-push-action@v2
-        with:
+      - name: Build image
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+
+      - name: Log in to registry
+        # This is where you will update the PAT to GITHUB_TOKEN
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+      - name: Push image
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+
+        # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+        # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+        # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+        # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION    
+ #     - name: Build image and push to Docker Hub and GitHub Container Registry
+ #       uses: docker/build-push-action@v2
+ #       with:
           # relative path to the place where source code with Dockerfile is located
           #context: ./src/samples/simple
           # Note: tags has to be all lower-case
-          tags: |
-            kirilc/node-web-app:latest 
-            ghcr.io/kirilc/node-web-app:latest
+ #         tags: |
+ #           kirilc/node-web-app:latest 
+ #           ghcr.io/kirilc/node-web-app:latest
           # build on feature branches, push only on main branch
-          push: ${{ github.ref == 'refs/heads/main' }}
+ #         push: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
-        
+ #     - name: Image digest
+ #       run: echo ${{ steps.docker_build.outputs.digest }}
+
       # Runs a single command using the runners shell
       #- name: Run a one-line script
        # run: echo Hello, world!
